@@ -3,720 +3,797 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DLV - Gestão Integrada Pro</title>
+    <title>DLV Gestão Pro v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .tab-active { background-color: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display: block; }
-        input, select, textarea { 
-            border: 1px solid #cbd5e1; border-radius: 12px; width: 100%; padding: 0.7rem; 
-            font-size: 0.875rem; transition: all 0.2s; outline: none;
-        }
-        input:focus { border-color: #2563eb; ring: 2px ring-blue-100; }
-        .status-1 { background-color: #dcfce7; color: #166534; border: 1px solid #166534; }
-        .status-2 { background-color: #fef9c3; color: #854d0e; border: 1px solid #854d0e; }
-        .status-3 { background-color: #fee2e2; color: #991b1b; border: 1px solid #991b1b; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .tab-active { background-color: #1e293b !important; color: #f8fafc !important; transform: translateY(-2px); shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .status-1 { border-left: 6px solid #22c55e; } /* Verde - Início */
+        .status-2 { border-left: 6px solid #eab308; } /* Amarelo - Produção */
+        .status-3 { border-left: 6px solid #ef4444; } /* Vermelho - Concluído */
+        label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        input, select, textarea { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 14px; width: 100%; transition: all 0.2s; }
+        input:focus { border-color: #3b82f6; outline: none; ring: 2px solid #dbeafe; }
+        .btn-primary { background: #1e293b; color: white; font-weight: 700; padding: 10px 20px; border-radius: 8px; transition: all 0.2s; }
+        .btn-primary:hover { background: #0f172a; transform: scale(1.02); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .card { background: white; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: none; items-center; justify-content: center; backdrop-filter: blur(2px); }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen">
 
-    <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-xl">
-        <div class="container mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20"><i class="fas fa-layer-group text-2xl"></i></div>
+    <div id="loading" class="loading-overlay">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-900 border-t-transparent mb-4"></div>
+            <p class="font-bold text-slate-900 animate-pulse uppercase text-xs tracking-widest">Processando Dados...</p>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO SUPERIOR -->
+    <nav class="bg-white border-b sticky top-0 z-40 px-4 py-2">
+        <div class="container mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-slate-900 p-2 rounded-lg text-white"><i class="fas fa-layer-group"></i></div>
                 <div>
-                    <h1 class="text-lg font-black uppercase tracking-tighter leading-none">DLV GESTÃO PRO</h1>
-                    <span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Industrial & Comercial</span>
+                    <h1 class="font-black text-slate-900 leading-none">DLV <span class="text-blue-600">PRO</span></h1>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">v5.0 Enterprise</span>
                 </div>
             </div>
-            <nav class="flex bg-slate-800 p-1.5 rounded-2xl overflow-x-auto no-scrollbar gap-1.5 border border-slate-700">
-                <button onclick="switchTab('os')" id="nav-os" class="tab-active px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-tools mr-2"></i> Ordem Serviço</button>
-                <button onclick="switchTab('pdv')" id="nav-pdv" class="text-slate-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-shopping-cart mr-2"></i> PDV</button>
-                <button onclick="switchTab('estoque')" id="nav-estoque" class="text-slate-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-box-open mr-2"></i> Estoque</button>
-                <button onclick="switchTab('clientes')" id="nav-clientes" class="text-slate-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-id-card mr-2"></i> Clientes</button>
-                <button onclick="switchTab('fornecedores')" id="nav-fornecedores" class="text-slate-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-truck-loading mr-2"></i> Fornecedores</button>
-                <button onclick="switchTab('financeiro')" id="nav-financeiro" class="text-slate-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap"><i class="fas fa-wallet mr-2"></i> Financeiro</button>
-            </nav>
+            
+            <div class="flex bg-slate-100 p-1 rounded-xl overflow-x-auto no-scrollbar max-w-full">
+                <button onclick="switchTab('os')" id="btn-os" class="tab-active px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap">O.S</button>
+                <button onclick="switchTab('pdv')" id="btn-pdv" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase whitespace-nowrap">PDV Vendas</button>
+                <button onclick="switchTab('estoque')" id="btn-estoque" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Estoque</button>
+                <button onclick="switchTab('clientes')" id="btn-clientes" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Clientes</button>
+                <button onclick="switchTab('fornecedores')" id="btn-fornecedores" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Forn.</button>
+                <button onclick="switchTab('balanço')" id="btn-balanço" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Balanço</button>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <main class="container mx-auto p-4">
-        
+
         <!-- ABA: ORDEM DE SERVIÇO -->
         <div id="tab-os" class="tab-content">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-8 space-y-4">
-                    <div class="card p-8">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="font-black text-xl text-slate-800 uppercase italic">Nova Ordem de Serviço</h2>
+                <!-- FORMULÁRIO OS -->
+                <div class="lg:col-span-8">
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6 border-b pb-4">
+                            <h2 class="font-black text-slate-800 uppercase flex items-center gap-2">
+                                <i class="fas fa-clipboard-list text-blue-600"></i> Gestão de Pedido
+                            </h2>
                             <div class="text-right">
-                                <span id="osNovoCodigo" class="bg-blue-600 text-white px-4 py-1.5 rounded-full font-mono font-black text-sm">OS-2025-XXXX</span>
+                                <span id="osCodigo" class="bg-slate-900 text-white px-3 py-1 rounded font-mono text-sm font-bold">OS-000000</span>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-6 gap-5">
-                            <div class="md:col-span-6">
-                                <label>Título do Projeto</label>
-                                <input type="text" id="osTitulo" placeholder="Ex: Produção de 50 Cadernos Personalizados">
-                            </div>
-
-                            <div class="md:col-span-4">
-                                <label>Cliente</label>
-                                <select id="osClienteId" onchange="exibirHistoricoCliente(this.value)"></select>
-                            </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div class="md:col-span-2">
+                                <label>Nome Central do Pedido</label>
+                                <input type="text" id="osTitulo" placeholder="Ex: Produção de 50 Apostilas">
+                            </div>
+                            <div>
+                                <label>Cliente</label>
+                                <select id="osClienteId" onchange="loadHistoricoCliente(this.value)"></select>
+                                <div id="cliMiniHistorico" class="text-[10px] font-bold text-blue-600 mt-1 uppercase italic"></div>
+                            </div>
+                            <div>
                                 <label>Prazo de Entrega</label>
-                                <input type="date" id="osDataEntrega">
+                                <input type="date" id="osPrazo">
                             </div>
+                        </div>
 
-                            <div class="md:col-span-6 bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-300">
-                                <label class="text-blue-700 mb-4 flex items-center"><i class="fas fa-plus-circle mr-2"></i> Itens da Produção</label>
-                                <div class="flex flex-col md:flex-row gap-3">
-                                    <select id="osAddProdId" class="flex-1"></select>
-                                    <input type="number" id="osAddProdQtd" value="1" class="w-full md:w-24 text-center">
-                                    <button onclick="adicionarItemNaOS()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase hover:bg-blue-700">Adicionar</button>
+                        <!-- SELEÇÃO DE PRODUTOS -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+                            <label class="mb-3">Produtos e Materiais do Serviço</label>
+                            <div class="flex gap-2">
+                                <select id="osProdAdd" class="flex-1"></select>
+                                <input type="number" id="osQtdAdd" value="1" class="w-20 text-center font-bold">
+                                <button onclick="addItemOS()" class="bg-blue-600 text-white px-4 rounded-lg"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="osListaItens" class="mt-4 space-y-2">
+                                <!-- Itens Adicionados -->
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label>Somente Descrição</label>
+                                <textarea id="osDescricao" rows="3" placeholder="Detalhes técnicos..."></textarea>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label>Imagem do Serviço</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="file" id="osFoto" accept="image/*" class="text-xs" onchange="previewOS(this)">
+                                    <div id="osPrevCont" class="hidden w-20 h-20 border rounded overflow-hidden">
+                                        <img id="osImgView" src="" class="w-full h-full object-cover">
+                                    </div>
                                 </div>
-                                <div id="osListaItens" class="mt-6 space-y-3"></div>
                             </div>
+                        </div>
 
-                            <div class="md:col-span-6">
-                                <label>Observações Técnicas</label>
-                                <textarea id="osDescricao" rows="2" placeholder="Ex: Capa dura, papel 90g..."></textarea>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-slate-900 p-6 rounded-xl text-white">
+                            <div>
+                                <label class="text-slate-400">Total Geral</label>
+                                <p id="osTotalTxt" class="text-3xl font-black text-blue-400">R$ 0,00</p>
                             </div>
-
-                            <div class="md:col-span-3">
-                                <label>Foto/Projeto</label>
-                                <input type="file" id="osFoto" accept="image/*" onchange="previewOSImg(this)">
-                                <div id="osFotoPreview" class="mt-3 w-full h-40 rounded-2xl bg-slate-100 overflow-hidden border border-slate-200 hidden"></div>
+                            <div>
+                                <label class="text-slate-400">Valor Entrada</label>
+                                <input type="number" id="osEntrada" value="0" class="bg-slate-800 border-none text-white font-bold">
                             </div>
-
-                            <div class="md:col-span-3">
-                                <label>Status Atual</label>
-                                <select id="osStatus" class="status-1" onchange="this.className = 'status-' + this.value">
-                                    <option value="1">Aguardando Início (Verde)</option>
-                                    <option value="2">Em Produção (Amarelo)</option>
-                                    <option value="3">Finalizado / Entregue (Vermelho)</option>
+                            <div>
+                                <label class="text-slate-400">Status</label>
+                                <select id="osStatus" class="bg-slate-800 border-none text-white font-bold">
+                                    <option value="1">1 - INÍCIO (VERDE)</option>
+                                    <option value="2">2 - EM PRODUÇÃO (AMARELO)</option>
+                                    <option value="3">3 - CONCLUÍDO (VERMELHO)</option>
                                 </select>
                             </div>
+                        </div>
 
-                            <div class="md:col-span-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900 p-6 rounded-3xl text-white">
-                                <div><label class="text-slate-400">Total Geral</label><input type="text" id="osTotal" readonly class="bg-transparent border-none text-2xl font-black p-0 text-white" value="R$ 0,00"></div>
-                                <div><label class="text-slate-400">Entrada (R$)</label><input type="number" id="osEntrada" class="bg-slate-800 border-slate-700 text-white"></div>
-                                <div><label class="text-slate-400">Método de Entrada</label>
-                                    <select id="osMetodoPgto" class="bg-slate-800 border-slate-700 text-white">
-                                        <option value="Pix">Pix</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                        <option value="Cartão">Cartão</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <button onclick="salvarOS()" class="md:col-span-6 bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs tracking-[0.2em] hover:bg-blue-500 shadow-xl shadow-blue-500/20 transition-all">
-                                Registrar OS e Gerar Documento
+                        <div class="flex gap-2 mt-6">
+                            <button onclick="salvarOS()" class="flex-1 btn-primary py-4 text-sm uppercase tracking-widest">Gravar e Gerar OS</button>
+                            <button onclick="exportarPDFOS()" class="bg-slate-200 text-slate-700 px-6 rounded-lg hover:bg-slate-300 transition-all">
+                                <i class="fas fa-file-pdf"></i> PDF
                             </button>
+                            <button onclick="limparOS()" class="bg-slate-100 text-slate-400 px-4 rounded-lg">Limpar</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="card p-6">
-                        <h3 class="text-[10px] font-black uppercase text-slate-400 mb-4 flex justify-between">Ordens Recentes <span id="countOS" class="text-blue-600">0</span></h3>
-                        <div id="listaOSRecentes" class="space-y-4 max-h-[600px] overflow-y-auto no-scrollbar"></div>
+                <!-- LISTA DE OS -->
+                <div class="lg:col-span-4">
+                    <div class="card p-4 mb-4">
+                        <input type="text" id="osBusca" oninput="renderOS()" placeholder="Buscar OS ou Cliente..." class="text-xs">
+                    </div>
+                    <div id="osListaContainer" class="space-y-3 max-h-screen overflow-y-auto pr-2 no-scrollbar">
+                        <!-- OS Cards -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA: PDV -->
+        <!-- ABA: PDV (VENDAS RÁPIDAS) -->
         <div id="tab-pdv" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="card p-6">
-                        <div id="caixaStatus" class="p-6 rounded-3xl bg-red-50 text-red-600 border border-red-100 text-center mb-6">
-                            <i class="fas fa-lock text-3xl mb-2"></i>
-                            <p class="text-xs font-black uppercase">Caixa Fechado</p>
-                            <p class="text-[10px] opacity-70">Abra o caixa para iniciar vendas</p>
-                        </div>
-                        <button onclick="toggleCaixa()" id="btnToggleCaixa" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest">Abrir Caixa do Dia</button>
+                <!-- CARRINHO -->
+                <div class="lg:col-span-8 card p-6">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="font-black text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-cash-register"></i> PDV Venda Direta</h2>
+                        <div id="caixaStatus" class="text-[10px] font-bold px-3 py-1 rounded bg-red-100 text-red-600 uppercase">Caixa Fechado</div>
                     </div>
 
-                    <div class="card p-6">
-                        <h3 class="font-black uppercase text-[10px] text-slate-400 mb-4">Últimos Recibos</h3>
-                        <div id="listaRecibos" class="space-y-2"></div>
+                    <div class="flex gap-2 mb-6">
+                        <select id="pdvProdId" class="flex-1"></select>
+                        <input type="number" id="pdvQtd" value="1" class="w-20 text-center font-bold">
+                        <button onclick="addItemPDV()" class="bg-emerald-600 text-white px-6 rounded-lg font-bold">ADICIONAR</button>
+                    </div>
+
+                    <div class="overflow-x-auto border rounded-xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 border-b">
+                                <tr>
+                                    <th class="p-3">Item</th>
+                                    <th class="p-3">Qtd</th>
+                                    <th class="p-3">Valor Unit.</th>
+                                    <th class="p-3">Subtotal</th>
+                                    <th class="p-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pdvCarrinho" class="divide-y"></tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="lg:col-span-8">
-                    <div class="card p-8">
-                        <div class="flex justify-between items-end mb-8">
-                            <div>
-                                <h2 class="font-black uppercase text-xl italic">Venda Direta</h2>
-                                <p class="text-[10px] text-slate-400">Checkout rápido de balcão</p>
-                            </div>
-                            <div class="text-right">
-                                <label>Total Venda</label>
-                                <p id="pdvTotalDisplay" class="text-4xl font-black text-blue-600">R$ 0,00</p>
-                            </div>
+                <!-- PAGAMENTO PDV -->
+                <div class="lg:col-span-4 card p-6 bg-slate-900 text-white">
+                    <label class="text-slate-400">Total do Cupom</label>
+                    <div id="pdvTotalTxt" class="text-5xl font-black text-emerald-400 mb-6 italic">R$ 0,00</div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-slate-400">Valor Pago</label>
+                            <input type="number" id="pdvValorPago" oninput="calcTroco()" class="bg-slate-800 border-none text-white text-3xl font-bold h-16 text-center">
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Troco</span>
+                            <span id="pdvTrocoTxt" class="text-2xl font-black text-yellow-400">R$ 0,00</span>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2 bg-slate-50 p-6 rounded-3xl border">
-                                <label>Buscar Produto/Serviço</label>
-                                <div class="flex gap-2">
-                                    <select id="pdvProdId" onchange="updatePDVPrice()" class="flex-1"></select>
-                                    <input type="number" id="pdvQtd" value="1" oninput="updatePDVPrice()" class="w-24 text-center font-bold">
-                                </div>
-                            </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="finalizarVenda('Dinheiro')" class="bg-slate-800 p-3 rounded-lg text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all border border-slate-700">Dinheiro</button>
+                            <button onclick="finalizarVenda('Pix')" class="bg-slate-800 p-3 rounded-lg text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all border border-slate-700">Pix</button>
+                            <button onclick="finalizarVenda('Crédito')" class="bg-slate-800 p-3 rounded-lg text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all border border-slate-700">Crédito</button>
+                            <button onclick="finalizarVenda('Débito')" class="bg-slate-800 p-3 rounded-lg text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all border border-slate-700">Débito</button>
+                        </div>
 
-                            <div class="md:col-span-2">
-                                <label>Cliente (Opcional)</label>
-                                <select id="pdvCliId"></select>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label>Forma de Pagamento</label>
-                                    <select id="pdvForma" class="font-bold">
-                                        <option value="Pix">PIX (Instantâneo)</option>
-                                        <option value="Dinheiro">Dinheiro (Espécie)</option>
-                                        <option value="Crédito">Cartão Crédito</option>
-                                        <option value="Débito">Cartão Débito</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label>Valor Recebido</label>
-                                        <input type="number" id="pdvPago" oninput="calcTroco()" placeholder="0,00" class="text-lg font-black text-green-600">
-                                    </div>
-                                    <div>
-                                        <label>Troco</label>
-                                        <input type="text" id="pdvTroco" readonly class="text-lg font-black text-red-500 bg-slate-50 border-none" value="R$ 0,00">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col justify-end">
-                                <button onclick="finalizarVenda()" class="w-full bg-green-600 text-white font-black py-6 rounded-2xl uppercase text-xs shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all">
-                                    Finalizar e Imprimir Recibo
-                                </button>
-                            </div>
+                        <div class="pt-6 border-t border-slate-700 grid grid-cols-2 gap-2">
+                            <button onclick="abrirCaixa()" class="bg-blue-600 p-2 rounded text-[9px] font-bold uppercase">Abrir Caixa</button>
+                            <button onclick="fecharCaixa()" class="bg-red-600 p-2 rounded text-[9px] font-bold uppercase">Fechar Caixa</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA: ESTOQUE -->
+        <!-- ABA: ESTOQUE E COMPOSIÇÃO -->
         <div id="tab-estoque" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-4">
-                    <div class="card p-8 sticky top-24">
-                        <h2 class="font-black uppercase text-sm mb-6 flex items-center"><i class="fas fa-plus-square mr-2 text-blue-600"></i> Cadastro de Item</h2>
-                        <div class="space-y-5">
-                            <div><label>Nome do Produto/Material</label><input type="text" id="prodNome" placeholder="Ex: Caderno ou Arame"></div>
-                            
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label>Custo (R$)</label><input type="number" id="prodCusto" step="0.01"></div>
-                                <div><label>Venda (R$)</label><input type="number" id="prodVenda" step="0.01"></div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label>Estoque Atual</label><input type="number" id="prodQtd" value="0"></div>
-                                <div><label>Fornecedor</label><select id="prodFornecedorId"></select></div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3 border-t pt-4">
-                                <div><label>Mínimo</label><input type="number" id="prodMin" value="5"></div>
-                                <div><label>Máximo</label><input type="number" id="prodMax" value="100"></div>
-                            </div>
-
-                            <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
-                                <label class="text-blue-700 mb-2">Composição / Ficha Técnica</label>
-                                <p class="text-[9px] text-blue-500 mb-3 uppercase font-bold italic">Se for um produto acabado, selecione o que ele consome:</p>
-                                <div class="space-y-2" id="prodCompList"></div>
-                                <div class="mt-3 flex gap-2">
-                                    <select id="compAddId" class="text-[11px]"></select>
-                                    <input type="number" id="compAddQtd" placeholder="Qtd" class="w-16 text-[11px]">
-                                    <button onclick="addCompRow()" class="bg-blue-600 text-white px-3 rounded-lg"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-
-                            <button onclick="salvarProduto()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all">Salvar Item no Sistema</button>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- FORM PRODUTO -->
+                <div class="card p-6 h-fit sticky top-20">
+                    <h2 class="font-black text-blue-600 mb-6 uppercase italic">Cadastro de Item</h2>
+                    <input type="hidden" id="prodId">
+                    <div class="space-y-4">
+                        <div><label>Nome do Produto</label><input type="text" id="prodNome"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label>Custo (R$)</label><input type="number" id="prodCusto"></div>
+                            <div><label>Venda (R$)</label><input type="number" id="prodVenda"></div>
                         </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label>Qtd Atual</label><input type="number" id="prodQtd"></div>
+                            <div><label>Qtd Mínima</label><input type="number" id="prodMin"></div>
+                        </div>
+                        <div><label>Fornecedor</label><select id="prodForn"></select></div>
+
+                        <!-- COMPOSIÇÃO -->
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                            <label class="text-blue-800">Composição (Insumos)</label>
+                            <div class="flex gap-1 mb-3">
+                                <select id="compItem" class="text-xs"></select>
+                                <input type="number" id="compQtd" value="1" class="w-12 text-center text-xs">
+                                <button onclick="addComp()" class="bg-blue-600 text-white px-2 rounded text-xs">Add</button>
+                            </div>
+                            <div id="compLista" class="space-y-1"></div>
+                        </div>
+
+                        <button onclick="salvarProduto()" class="w-full btn-primary">Salvar Produto</button>
                     </div>
                 </div>
-                <div class="lg:col-span-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="gradeProdutos"></div>
-                </div>
+                <!-- GRID ESTOQUE -->
+                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4" id="estoqueGrid"></div>
             </div>
         </div>
 
         <!-- ABA: CLIENTES -->
         <div id="tab-clientes" class="tab-content hidden">
-            <div class="max-w-5xl mx-auto space-y-6">
-                <div class="card p-8">
-                    <h2 class="font-black uppercase text-lg mb-8 italic">Cadastro de Clientes</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div class="md:col-span-2"><label>Nome Completo / Razão Social</label><input type="text" id="cliNome"></div>
-                        <div><label>Código Cliente</label><input type="text" id="cliCodigo" readonly class="bg-slate-50 font-mono font-bold"></div>
-                        
-                        <div><label>CPF / CNPJ</label><input type="text" id="cliDoc" placeholder="000.000.000-00"></div>
-                        <div><label>WhatsApp / Telefone</label><input type="text" id="cliZap" placeholder="(00) 00000-0000"></div>
-                        <div><label>E-mail</label><input type="email" id="cliEmail"></div>
-
-                        <div class="md:col-span-3"><label>Endereço Completo</label><input type="text" id="cliEnd" placeholder="Rua, Número, Bairro, Cidade - UF"></div>
-                        
-                        <button onclick="salvarCliente()" class="md:col-span-3 bg-blue-600 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-lg shadow-blue-500/10">Cadastrar Cliente</button>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card p-6 h-fit sticky top-20">
+                    <h2 class="font-black text-slate-800 mb-6 uppercase italic">Cadastro Cliente</h2>
+                    <div class="space-y-4">
+                        <div><label>Nome/Razão</label><input type="text" id="cliNome"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label>CPF/CNPJ</label><input type="text" id="cliDoc"></div>
+                            <div><label>WhatsApp</label><input type="text" id="cliZap"></div>
+                        </div>
+                        <div><label>Endereço Completo</label><textarea id="cliEnd" rows="2"></textarea></div>
+                        <button onclick="salvarCliente()" class="w-full btn-primary">Gravar Cliente</button>
                     </div>
                 </div>
-                <div id="listaClientes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4" id="clientesGrid"></div>
             </div>
         </div>
 
-        <!-- ABA: FINANCEIRO -->
-        <div id="tab-financeiro" class="tab-content hidden">
-            <div class="max-w-6xl mx-auto space-y-6">
+        <!-- ABA: FORNECEDORES -->
+        <div id="tab-fornecedores" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card p-6 h-fit sticky top-20">
+                    <h2 class="font-black text-slate-800 mb-6 uppercase italic">Cadastro Fornecedor</h2>
+                    <div class="space-y-4">
+                        <div><label>Nome Empresa</label><input type="text" id="fornNome"></div>
+                        <div><label>Telefone</label><input type="text" id="fornTel"></div>
+                        <div><label>Endereço</label><textarea id="fornEnd" rows="2"></textarea></div>
+                        <button onclick="salvarFornecedor()" class="w-full btn-primary">Gravar Fornecedor</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4" id="fornecedoresGrid"></div>
+            </div>
+        </div>
+
+        <!-- ABA: BALANÇO FINANCEIRO -->
+        <div id="tab-balanço" class="tab-content hidden">
+            <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="card p-6 text-center border-b-4 border-b-green-500">
-                        <label>Saldo em Caixa</label>
-                        <p id="finSaldo" class="text-2xl font-black text-slate-800">R$ 0,00</p>
+                    <div class="card p-6 bg-emerald-50 border-l-8 border-emerald-500">
+                        <label>Entradas Mês</label>
+                        <p id="finEntradas" class="text-3xl font-black text-emerald-700">R$ 0,00</p>
                     </div>
-                    <div class="card p-6 text-center border-b-4 border-b-blue-500">
-                        <label>Entradas (Mês)</label>
-                        <p id="finEntradas" class="text-2xl font-black text-blue-600">R$ 0,00</p>
+                    <div class="card p-6 bg-red-50 border-l-8 border-red-500">
+                        <label>Saídas Mês</label>
+                        <p id="finSaidas" class="text-3xl font-black text-red-700">R$ 0,00</p>
                     </div>
-                    <div class="card p-6 text-center border-b-4 border-b-red-500">
-                        <label>Saídas (Mês)</label>
-                        <p id="finSaidas" class="text-2xl font-black text-red-600">R$ 0,00</p>
+                    <div class="card p-6 bg-blue-50 border-l-8 border-blue-500">
+                        <label>Saldo Líquido</label>
+                        <p id="finSaldo" class="text-3xl font-black text-blue-700">R$ 0,00</p>
                     </div>
-                    <div class="card p-6 text-center border-b-4 border-b-slate-800">
-                        <label>Ticket Médio</label>
-                        <p id="finTicket" class="text-2xl font-black text-slate-500">R$ 0,00</p>
+                    <div class="card p-6 bg-slate-900 border-l-8 border-slate-500 text-white">
+                        <label class="text-slate-400">Total Anual</label>
+                        <p id="finAnual" class="text-3xl font-black">R$ 0,00</p>
                     </div>
                 </div>
 
-                <div class="card overflow-hidden">
-                    <div class="bg-slate-900 p-4 flex justify-between items-center">
-                        <h3 class="text-white font-black uppercase text-xs">Fluxo de Caixa Detalhado</h3>
-                        <button onclick="exportarFinanceiro()" class="text-blue-400 text-[10px] font-bold uppercase"><i class="fas fa-download mr-1"></i> Exportar CSV</button>
+                <div class="card p-6">
+                    <div class="flex flex-wrap gap-4 mb-6 items-end">
+                        <div class="flex-1 min-w-[200px]"><label>Filtrar Cliente</label><select id="finFiltroCli" onchange="renderBalanço()"></select></div>
+                        <div class="flex-1 min-w-[200px]"><label>Filtrar Produto</label><select id="finFiltroProd" onchange="renderBalanço()"></select></div>
+                        <button onclick="window.print()" class="bg-slate-100 p-2 rounded px-4 font-bold text-xs uppercase">Imprimir Relatório</button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 border-b uppercase font-black text-slate-400">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-slate-100 uppercase font-black">
                                 <tr>
-                                    <th class="p-5">Data/Hora</th>
-                                    <th>Origem/Referência</th>
-                                    <th>Método</th>
-                                    <th>Tipo</th>
-                                    <th class="text-right p-5">Valor</th>
+                                    <th class="p-4">Data</th>
+                                    <th class="p-4">Descrição / Origem</th>
+                                    <th class="p-4">Cliente / Produto</th>
+                                    <th class="p-4 text-right">Valor</th>
                                 </tr>
                             </thead>
-                            <tbody id="corpoFinanceiro" class="divide-y"></tbody>
+                            <tbody id="balancoCorpo" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA: FORNECEDORES -->
-        <div id="tab-fornecedores" class="tab-content hidden">
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-sm border">
-                <h2 class="font-black uppercase text-lg mb-6 italic">Fornecedores</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label>Empresa</label><input type="text" id="forNome"></div>
-                    <div><label>Código Ref.</label><input type="text" id="forCodigo" placeholder="F-001"></div>
-                    <div><label>Telefone</label><input type="text" id="forZap"></div>
-                    <div class="md:col-span-2"><label>Endereço</label><input type="text" id="forEnd"></div>
-                    <button onclick="salvarFornecedor()" class="md:col-span-2 bg-slate-900 text-white font-black p-4 rounded-2xl uppercase text-xs">Salvar Fornecedor</button>
-                </div>
-                <div id="listaFornecedores" class="mt-8 space-y-3"></div>
-            </div>
-        </div>
-
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, updateDoc, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dlv-pro-v1';
-
+    <script>
+        // --- ESTADO GLOBAL E FIREBASE ---
+        let db;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dlv-v5-final';
         let state = {
-            clientes: [], estoque: [], ordens: [], fornecedores: [], 
-            caixaAberto: false, osCarrinho: [], osFotoBase64: "", 
-            movimentacoes: [], compTemporaria: []
+            clientes: [], estoque: [], ordens: [], fornecedores: [], financeiro: [],
+            osItens: [], pdvItens: [], prodComp: [], imgOS: "",
+            caixaAberto: false, caixaDocId: null
         };
 
-        // --- AUTH & INIT ---
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { await signInAnonymously(auth); return; }
-            initListeners();
-        });
+        const getCol = (name) => db.collection('artifacts', appId, 'public', 'data', name);
 
-        function initListeners() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), sn => {
-                state.clientes = sn.docs.map(d => ({id: d.id, ...d.data()}));
-                renderClientes(); updateSelects(); gerarCodigoCliente();
+        window.onload = async function() {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore(app);
+                const auth = firebase.auth(app);
+
+                await auth.signInAnonymously();
+                
+                // Sync de dados
+                getCol('clientes').onSnapshot(sn => { state.clientes = sn.docs.map(d => ({id: d.id, ...d.data()})); renderClientes(); updateSelects(); });
+                getCol('estoque').onSnapshot(sn => { state.estoque = sn.docs.map(d => ({id: d.id, ...d.data()})); renderEstoque(); updateSelects(); });
+                getCol('ordens').onSnapshot(sn => { state.ordens = sn.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b)=>b.ts-a.ts); renderOS(); });
+                getCol('fornecedores').onSnapshot(sn => { state.fornecedores = sn.docs.map(d => ({id: d.id, ...d.data()})); renderFornecedores(); updateSelects(); });
+                getCol('financeiro').onSnapshot(sn => { state.financeiro = sn.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b)=>b.ts-a.ts); renderBalanço(); });
+                getCol('caixa').orderBy('abertura', 'desc').limit(1).onSnapshot(sn => {
+                    if(!sn.empty) {
+                        const c = sn.docs[0].data();
+                        state.caixaAberto = !c.fechamento;
+                        state.caixaDocId = sn.docs[0].id;
+                        updateCaixaUI();
+                    }
+                });
+                
+                limparOS();
+            } catch (err) { console.error("Erro Firebase:", err); }
+        };
+
+        // --- NAVEGAÇÃO ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => {
+                b.classList.remove('tab-active'); b.classList.add('text-slate-500');
             });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'produtos'), sn => {
-                state.estoque = sn.docs.map(d => ({id: d.id, ...d.data()}));
-                renderEstoque(); updateSelects();
-            });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), sn => {
-                state.fornecedores = sn.docs.map(d => ({id: d.id, ...d.data()}));
-                renderFornecedores(); updateSelects();
-            });
-            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'ordens_servico'), orderBy('timestamp', 'desc')), sn => {
-                state.ordens = sn.docs.map(d => ({id: d.id, ...d.data()}));
-                renderOrdens(); gerarCodigoOS();
-            });
-            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'movimentacoes'), orderBy('timestamp', 'desc')), sn => {
-                state.movimentacoes = sn.docs.map(d => ({id: d.id, ...d.data()}));
-                renderFinanceiro();
-            });
+            document.getElementById('btn-' + tab).classList.add('tab-active');
         }
 
-        // --- ORDEM DE SERVIÇO ---
-        window.adicionarItemNaOS = () => {
-            const id = document.getElementById('osAddProdId').value;
-            const qtd = parseInt(document.getElementById('osAddProdQtd').value) || 1;
+        function showLoad(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+
+        // --- LOGICA DE ESTOQUE & COMPOSIÇÃO ---
+        function addComp() {
+            const id = document.getElementById('compItem').value;
+            const qtd = parseFloat(document.getElementById('compQtd').value) || 1;
             const p = state.estoque.find(x => x.id === id);
             if(!p) return;
-            state.osCarrinho.push({ id, nome: p.nome, qtd, preco: p.venda });
-            renderCarrinhoOS();
-        };
-
-        function renderCarrinhoOS() {
-            let total = 0;
-            document.getElementById('osListaItens').innerHTML = state.osCarrinho.map((it, idx) => {
-                total += it.preco * it.qtd;
-                return `<div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border">
-                    <div><p class="font-black text-xs uppercase">${it.nome}</p><p class="text-[9px] text-slate-400">Qtd: ${it.qtd} x R$ ${it.preco.toFixed(2)}</p></div>
-                    <div class="flex items-center gap-4"><b class="text-sm">R$ ${(it.preco*it.qtd).toFixed(2)}</b>
-                    <button onclick="state.osCarrinho.splice(${idx},1);renderCarrinhoOS();" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></div>
-                </div>`;
-            }).join('');
-            document.getElementById('osTotal').value = `R$ ${total.toFixed(2)}`;
-            state.totalOSNum = total;
+            state.prodComp.push({ id, nome: p.nome, qtd });
+            renderCompList();
         }
 
-        window.salvarOS = async () => {
-            const entrada = parseFloat(document.getElementById('osEntrada').value) || 0;
-            const data = {
-                codigo: document.getElementById('osNovoCodigo').innerText,
-                titulo: document.getElementById('osTitulo').value,
-                clienteId: document.getElementById('osClienteId').value,
-                dataEntrega: document.getElementById('osDataEntrega').value,
-                descricao: document.getElementById('osDescricao').value,
-                status: document.getElementById('osStatus').value,
-                itens: state.osCarrinho,
-                total: state.totalOSNum,
-                entrada: entrada,
-                pagoTotal: entrada,
-                metodo: document.getElementById('osMetodoPgto').value,
-                foto: state.osFotoBase64,
-                timestamp: serverTimestamp()
+        function renderCompList() {
+            document.getElementById('compLista').innerHTML = state.prodComp.map((c, i) => `
+                <div class="flex justify-between items-center bg-white p-1 rounded text-[10px] border">
+                    <span>${c.nome} (x${c.qtd})</span>
+                    <button onclick="state.prodComp.splice(${i}, 1); renderCompList()" class="text-red-500">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function salvarProduto() {
+            const nome = document.getElementById('prodNome').value;
+            if(!nome) return alert("Nome é obrigatório");
+            showLoad(true);
+            const dados = {
+                codigo: "P-" + Math.floor(1000 + Math.random() * 9000),
+                nome,
+                custo: parseFloat(document.getElementById('prodCusto').value) || 0,
+                venda: parseFloat(document.getElementById('prodVenda').value) || 0,
+                qtd: parseFloat(document.getElementById('prodQtd').value) || 0,
+                min: parseFloat(document.getElementById('prodMin').value) || 0,
+                fornecedor: document.getElementById('prodForn').value,
+                composicao: state.prodComp,
+                ts: Date.now()
             };
+            await getCol('estoque').add(dados);
+            state.prodComp = [];
+            document.querySelectorAll('#tab-estoque input').forEach(i => i.value = "");
+            renderCompList();
+            showLoad(false);
+        }
 
-            if(!data.clienteId || data.itens.length === 0) return alert("Erro: Selecione um cliente e pelo menos um item.");
-
-            const osRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'ordens_servico'), data);
+        async function baixarEstoque(id, qtdPedida) {
+            const item = state.estoque.find(x => x.id === id);
+            if(!item) return;
+            await getCol('estoque').doc(id).update({ qtd: item.qtd - qtdPedida });
             
-            // Gerar movimentação financeira de entrada
-            if(entrada > 0) {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movimentacoes'), {
-                    tipo: 'entrada', valor: entrada, ref: `Entrada OS: ${data.codigo}`, metodo: data.metodo, timestamp: serverTimestamp()
-                });
-            }
-
-            // Baixar estoque (Considerando Ficha Técnica)
-            for(let item of data.itens) {
-                await processarBaixaEstoque(item.id, item.qtd);
-            }
-
-            alert("Ordem de Serviço registrada com sucesso!");
-            location.reload();
-        };
-
-        // --- ENGENHARIA DE PRODUTO (BAIXA AUTOMÁTICA) ---
-        async function processarBaixaEstoque(prodId, qtdVendida) {
-            const p = state.estoque.find(x => x.id === prodId);
-            if(!p) return;
-
-            // Baixa o produto principal
-            const pRef = doc(db, 'artifacts', appId, 'public', 'data', 'produtos', prodId);
-            await updateDoc(pRef, { qtd: (p.qtd || 0) - qtdVendida });
-
-            // Se tiver composição, baixa os sub-itens
-            if(p.composicao && p.composicao.length > 0) {
-                for(let comp of p.composicao) {
-                    const subP = state.estoque.find(x => x.id === comp.id);
-                    if(subP) {
-                        const subRef = doc(db, 'artifacts', appId, 'public', 'data', 'produtos', comp.id);
-                        await updateDoc(subRef, { qtd: (subP.qtd || 0) - (comp.qtd * qtdVendida) });
+            // Baixa composição se houver
+            if(item.composicao && item.composicao.length > 0) {
+                for(let comp of item.composicao) {
+                    const compOriginal = state.estoque.find(x => x.id === comp.id);
+                    if(compOriginal) {
+                        await getCol('estoque').doc(comp.id).update({ qtd: compOriginal.qtd - (comp.qtd * qtdPedida) });
                     }
                 }
             }
         }
 
-        // --- PDV ---
-        window.toggleCaixa = () => {
-            state.caixaAberto = !state.caixaAberto;
-            const btn = document.getElementById('btnToggleCaixa');
-            const status = document.getElementById('caixaStatus');
-            btn.innerText = state.caixaAberto ? "Fechar Caixa" : "Abrir Caixa do Dia";
-            status.innerHTML = `<i class="fas fa-${state.caixaAberto ? 'unlock' : 'lock'} text-3xl mb-2"></i><p class="text-xs font-black uppercase">Caixa ${state.caixaAberto ? 'Aberto' : 'Fechado'}</p>`;
-            status.className = `p-6 rounded-3xl ${state.caixaAberto ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'} border text-center mb-6`;
-        };
-
-        window.updatePDVPrice = () => {
-            const id = document.getElementById('pdvProdId').value;
-            const qtd = parseInt(document.getElementById('pdvQtd').value) || 1;
-            const p = state.estoque.find(x => x.id === id);
-            if(p) {
-                const total = p.venda * qtd;
-                document.getElementById('pdvTotalDisplay').innerText = `R$ ${total.toFixed(2)}`;
-                state.pdvTotalNum = total;
-                calcTroco();
-            }
-        };
-
-        window.calcTroco = () => {
-            const pago = parseFloat(document.getElementById('pdvPago').value) || 0;
-            const troco = pago - (state.pdvTotalNum || 0);
-            document.getElementById('pdvTroco').value = troco > 0 ? `R$ ${troco.toFixed(2)}` : "R$ 0,00";
-        };
-
-        window.finalizarVenda = async () => {
-            if(!state.caixaAberto) return alert("Erro: O caixa deve estar aberto!");
-            const id = document.getElementById('pdvProdId').value;
-            const qtd = parseInt(document.getElementById('pdvQtd').value) || 1;
-            const p = state.estoque.find(x => x.id === id);
-            if(!p) return alert("Selecione um produto");
-
-            // Registrar Venda Financeira
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movimentacoes'), {
-                tipo: 'entrada', valor: state.pdvTotalNum, ref: `Venda PDV: ${p.nome}`, 
-                metodo: document.getElementById('pdvForma').value, timestamp: serverTimestamp()
-            });
-
-            // Baixar Estoque
-            await processarBaixaEstoque(id, qtd);
-
-            gerarReciboPDV(p, qtd, state.pdvTotalNum, document.getElementById('pdvForma').value);
-            alert("Venda concluída!");
-            document.getElementById('pdvPago').value = "";
-            updatePDVPrice();
-        };
-
-        function gerarReciboPDV(p, qtd, total, metodo) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ unit: 'mm', format: [80, 150] });
-            doc.setFontSize(10);
-            doc.text("DLV GESTÃO PRO", 40, 10, {align:'center'});
-            doc.setFontSize(8);
-            doc.text("RECIBO DE VENDA", 40, 15, {align:'center'});
-            doc.text("-".repeat(40), 40, 18, {align:'center'});
-            doc.text(`DATA: ${new Date().toLocaleString()}`, 5, 25);
-            doc.text(`PROD: ${p.nome}`, 5, 30);
-            doc.text(`QTD: ${qtd} x R$ ${p.venda.toFixed(2)}`, 5, 35);
-            doc.text(`METODO: ${metodo}`, 5, 40);
-            doc.setFontSize(12);
-            doc.text(`TOTAL: R$ ${total.toFixed(2)}`, 5, 50);
-            doc.setFontSize(8);
-            doc.text("Obrigado pela preferência!", 40, 65, {align:'center'});
-            window.open(doc.output('bloburl'));
-        }
-
-        // --- ESTOQUE & COMPOSIÇÃO ---
-        window.addCompRow = () => {
-            const id = document.getElementById('compAddId').value;
-            const qtd = parseFloat(document.getElementById('compAddQtd').value) || 1;
+        // --- ORDEM DE SERVIÇO ---
+        function addItemOS() {
+            const id = document.getElementById('osProdAdd').value;
+            const qtd = parseFloat(document.getElementById('osQtdAdd').value) || 1;
             const p = state.estoque.find(x => x.id === id);
             if(!p) return;
-            state.compTemporaria.push({ id, nome: p.nome, qtd });
-            renderCompTemp();
-        };
-
-        function renderCompTemp() {
-            document.getElementById('prodCompList').innerHTML = state.compTemporaria.map((c, i) => `
-                <div class="flex justify-between text-[10px] bg-white p-1 rounded border">
-                    <span>${c.nome} (x${c.qtd})</span>
-                    <button onclick="state.compTemporaria.splice(${i},1);renderCompTemp();" class="text-red-500">X</button>
-                </div>`).join('');
+            state.osItens.push({ id, nome: p.nome, qtd, valor: p.venda });
+            renderOSItens();
         }
 
-        window.salvarProduto = async () => {
-            const data = {
-                nome: document.getElementById('prodNome').value,
-                custo: parseFloat(document.getElementById('prodCusto').value) || 0,
-                venda: parseFloat(document.getElementById('prodVenda').value) || 0,
-                qtd: parseInt(document.getElementById('prodQtd').value) || 0,
-                fornecedorId: document.getElementById('prodFornecedorId').value,
-                min: parseInt(document.getElementById('prodMin').value) || 0,
-                max: parseInt(document.getElementById('prodMax').value) || 0,
-                composicao: state.compTemporaria,
-                timestamp: serverTimestamp()
-            };
-
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'produtos'), data);
-            state.compTemporaria = [];
-            alert("Item cadastrado!");
-        };
-
-        // --- CLIENTES ---
-        window.salvarCliente = async () => {
-            const data = {
-                codigo: document.getElementById('cliCodigo').value,
-                nome: document.getElementById('cliNome').value,
-                doc: document.getElementById('cliDoc').value,
-                zap: document.getElementById('cliZap').value,
-                email: document.getElementById('cliEmail').value,
-                endereco: document.getElementById('cliEnd').value,
-                timestamp: serverTimestamp()
-            };
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), data);
-            alert("Cliente cadastrado!");
-        };
-
-        // --- AUXILIARES E RENDERERS ---
-        function renderEstoque() {
-            document.getElementById('gradeProdutos').innerHTML = state.estoque.map(p => `
-                <div class="card p-5 relative overflow-hidden">
-                    ${p.qtd <= p.min ? '<div class="absolute top-0 right-0 bg-red-500 text-white text-[8px] px-2 py-1 font-bold">ESTOQUE BAIXO</div>' : ''}
-                    <h4 class="font-black text-xs uppercase mb-1">${p.nome}</h4>
-                    <p class="text-[9px] text-slate-400 mb-4 italic">${p.composicao?.length > 0 ? 'Ficha Técnica Ativa' : 'Insumo Simples'}</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 p-3 rounded-xl">
-                            <label>Saldo</label>
-                            <span class="text-xl font-black ${p.qtd <= p.min ? 'text-red-500' : 'text-slate-800'}">${p.qtd}</span>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl">
-                            <label>Preço</label>
-                            <span class="text-sm font-black text-green-600">R$ ${p.venda.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>`).join('');
-        }
-
-        function renderFinanceiro() {
-            let sal=0, ent=0, sai=0;
-            const agora = new Date();
-            const corpo = document.getElementById('corpoFinanceiro');
-            corpo.innerHTML = state.movimentacoes.map(mov => {
-                const d = new Date(mov.timestamp?.seconds * 1000);
-                if(mov.tipo === 'entrada') {
-                    ent += mov.valor;
-                    sal += mov.valor;
-                } else {
-                    sai += mov.valor;
-                    sal -= mov.valor;
-                }
-                return `<tr class="hover:bg-slate-50">
-                    <td class="p-5 font-mono text-slate-400">${d.toLocaleString()}</td>
-                    <td class="font-bold">${mov.ref}</td>
-                    <td class="uppercase text-[9px] font-black">${mov.metodo || 'N/A'}</td>
-                    <td><span class="${mov.tipo === 'entrada' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} px-2 py-1 rounded-full font-black text-[9px] uppercase">${mov.tipo}</span></td>
-                    <td class="text-right p-5 font-black">R$ ${mov.valor.toFixed(2)}</td>
-                </tr>`;
-            }).join('');
-            document.getElementById('finSaldo').innerText = `R$ ${sal.toFixed(2)}`;
-            document.getElementById('finEntradas').innerText = `R$ ${ent.toFixed(2)}`;
-            document.getElementById('finSaidas').innerText = `R$ ${sai.toFixed(2)}`;
-            document.getElementById('finTicket').innerText = `R$ ${(state.movimentacoes.length > 0 ? ent/state.movimentacoes.length : 0).toFixed(2)}`;
-        }
-
-        function renderOrdens() {
-            document.getElementById('listaOSRecentes').innerHTML = state.ordens.map(os => {
-                const cli = state.clientes.find(c => c.id === os.clienteId);
-                return `<div class="card p-5 border-l-8 ${os.status == 1 ? 'border-green-400' : os.status == 2 ? 'border-yellow-400' : 'border-red-400'}">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[9px] font-black bg-slate-100 px-2 py-1 rounded text-slate-600">${os.codigo}</span>
-                        <span class="text-[9px] font-bold text-slate-400">${new Date(os.timestamp?.seconds*1000).toLocaleDateString()}</span>
-                    </div>
-                    <h4 class="font-black text-xs uppercase truncate">${os.titulo}</h4>
-                    <p class="text-[10px] text-blue-600 font-bold mb-3">${cli?.nome || 'Cliente Não Identificado'}</p>
-                    <div class="flex justify-between items-center text-xs font-black">
-                        <span>R$ ${os.total.toFixed(2)}</span>
-                        <button onclick="gerarDocumentoOS('${os.id}')" class="text-slate-400 hover:text-blue-600 transition-colors"><i class="fas fa-print"></i></button>
+        function renderOSItens() {
+            let total = 0;
+            document.getElementById('osListaItens').innerHTML = state.osItens.map((it, i) => {
+                total += (it.valor * it.qtd);
+                return `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg border text-xs">
+                    <span class="font-bold uppercase">${it.nome} (x${it.qtd})</span>
+                    <div class="flex items-center gap-4">
+                        <span class="font-black text-slate-800">R$ ${(it.valor * it.qtd).toFixed(2)}</span>
+                        <button onclick="state.osItens.splice(${i}, 1); renderOSItens()" class="text-red-400 hover:text-red-600">×</button>
                     </div>
                 </div>`;
             }).join('');
-            document.getElementById('countOS').innerText = state.ordens.length;
+            document.getElementById('osTotalTxt').innerText = `R$ ${total.toFixed(2)}`;
         }
 
-        function renderClientes() {
-            document.getElementById('listaClientes').innerHTML = state.clientes.map(c => `
-                <div class="card p-6 flex justify-between items-center">
-                    <div>
-                        <p class="text-[9px] font-black text-blue-600">${c.codigo}</p>
-                        <h4 class="font-black text-xs uppercase">${c.nome}</h4>
-                        <p class="text-[10px] text-slate-400 italic">${c.endereco || 'Endereço não cadastrado'}</p>
+        async function salvarOS() {
+            const cli = document.getElementById('osClienteId').value;
+            if(!cli) return alert("Selecione um cliente");
+            showLoad(true);
+            
+            const total = state.osItens.reduce((a,b)=>a+(b.valor*b.qtd), 0);
+            const entrada = parseFloat(document.getElementById('osEntrada').value) || 0;
+            const cod = document.getElementById('osCodigo').innerText;
+
+            const dados = {
+                codigo: cod,
+                titulo: document.getElementById('osTitulo').value,
+                cliente: cli,
+                prazo: document.getElementById('osPrazo').value,
+                itens: state.osItens,
+                descricao: document.getElementById('osDescricao').value,
+                status: document.getElementById('osStatus').value,
+                total,
+                entrada,
+                foto: state.imgOS,
+                ts: Date.now()
+            };
+
+            await getCol('ordens').add(dados);
+            
+            // Lançar entrada no financeiro
+            if(entrada > 0) {
+                await registrarFin(`Entrada OS ${cod}`, cli, 'Entrada', entrada, 'OS');
+            }
+
+            // Baixar estoque
+            for(let it of state.osItens) { await baixarEstoque(it.id, it.qtd); }
+
+            limparOS();
+            showLoad(false);
+            alert("Ordem de Serviço Registrada!");
+        }
+
+        function renderOS() {
+            const busca = document.getElementById('osBusca').value.toLowerCase();
+            const filt = state.ordens.filter(o => o.codigo.toLowerCase().includes(busca) || o.cliente.toLowerCase().includes(busca));
+            
+            document.getElementById('osListaContainer').innerHTML = filt.map(o => `
+                <div class="card p-4 status-${o.status} hover:shadow-md cursor-pointer transition-all border border-slate-100">
+                    <div class="flex gap-4">
+                        <div class="w-14 h-14 bg-slate-100 rounded-lg overflow-hidden border flex-shrink-0">
+                            ${o.foto ? `<img src="${o.foto}" class="w-full h-full object-cover">` : `<i class="fas fa-image text-slate-300 block text-center mt-4"></i>`}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[9px] font-black text-slate-400 font-mono">${o.codigo}</span>
+                                <span class="text-[8px] uppercase font-bold text-blue-500">${o.prazo || 's/ prazo'}</span>
+                            </div>
+                            <h4 class="font-black text-xs uppercase truncate text-slate-800">${o.titulo || 'Pedido s/ Nome'}</h4>
+                            <p class="text-[10px] text-slate-500 font-bold">${o.cliente}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs font-black text-slate-900">R$ ${o.total.toFixed(2)}</span>
+                                <span class="text-[8px] bg-slate-100 px-2 py-0.5 rounded uppercase font-bold">${o.status == 1 ? 'Início' : o.status == 2 ? 'Produção' : 'Concluído'}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-right"><p class="text-[10px] font-bold">${c.zap}</p></div>
-                </div>`).join('');
+                </div>
+            `).join('');
         }
 
-        function updateSelects() {
-            const sels = ['osClienteId', 'pdvCliId', 'osAddProdId', 'pdvProdId', 'prodFornecedorId', 'compAddId'];
-            sels.forEach(id => {
-                const el = document.getElementById(id);
-                if(!el) return;
-                if(id.includes('Cli')) el.innerHTML = '<option value="">Selecione o Cliente</option>' + state.clientes.map(c => `<option value="${c.id}">${c.codigo} - ${c.nome}</option>`).join('');
-                if(id.includes('Prod') || id === 'compAddId') el.innerHTML = '<option value="">Produto / Insumo</option>' + state.estoque.map(p => `<option value="${p.id}">${p.nome} (R$ ${p.venda.toFixed(2)})</option>`).join('');
-                if(id === 'prodFornecedorId') el.innerHTML = '<option value="">Fornecedor</option>' + state.fornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+        // --- PDV ---
+        function addItemPDV() {
+            const id = document.getElementById('pdvProdId').value;
+            const qtd = parseFloat(document.getElementById('pdvQtd').value) || 1;
+            const p = state.estoque.find(x => x.id === id);
+            if(!p) return;
+            state.pdvItens.push({ id, nome: p.nome, qtd, valor: p.venda });
+            renderPDVCarrinho();
+        }
+
+        function renderPDVCarrinho() {
+            let total = 0;
+            document.getElementById('pdvCarrinho').innerHTML = state.pdvItens.map((it, i) => {
+                total += (it.valor * it.qtd);
+                return `
+                <tr>
+                    <td class="p-3 font-bold">${it.nome}</td>
+                    <td class="p-3">${it.qtd}</td>
+                    <td class="p-3">R$ ${it.valor.toFixed(2)}</td>
+                    <td class="p-3 font-black">R$ ${(it.valor * it.qtd).toFixed(2)}</td>
+                    <td class="p-3"><button onclick="state.pdvItens.splice(${i}, 1); renderPDVCarrinho()" class="text-red-500">×</button></td>
+                </tr>`;
+            }).join('');
+            document.getElementById('pdvTotalTxt').innerText = `R$ ${total.toFixed(2)}`;
+            calcTroco();
+        }
+
+        function calcTroco() {
+            const total = state.pdvItens.reduce((a,b)=>a+(b.valor*b.qtd), 0);
+            const pago = parseFloat(document.getElementById('pdvValorPago').value) || 0;
+            document.getElementById('pdvTrocoTxt').innerText = `R$ ${Math.max(0, pago - total).toFixed(2)}`;
+        }
+
+        async function finalizarVenda(forma) {
+            if(!state.caixaAberto) return alert("Abra o caixa primeiro!");
+            const total = state.pdvItens.reduce((a,b)=>a+(b.valor*b.qtd), 0);
+            if(total <= 0) return;
+
+            showLoad(true);
+            try {
+                await registrarFin(`Venda Direta (${forma})`, 'Consumidor PDV', 'Entrada', total, 'PDV');
+                for(let it of state.pdvItens) { await baixarEstoque(it.id, it.qtd); }
+                
+                // Gerar Recibo Térmico (PDF)
+                exportarReciboPDV(forma);
+
+                state.pdvItens = [];
+                document.getElementById('pdvValorPago').value = "";
+                renderPDVCarrinho();
+                alert("Venda Concluída!");
+            } catch(e) { console.error(e); }
+            finally { showLoad(false); }
+        }
+
+        // --- CAIXA ---
+        async function abrirCaixa() {
+            if(state.caixaAberto) return alert("Caixa já está aberto!");
+            const fundo = prompt("Valor inicial de caixa:", "0.00");
+            if(fundo === null) return;
+            await getCol('caixa').add({ abertura: Date.now(), fechamento: null, fundo: parseFloat(fundo) });
+        }
+
+        async function fecharCaixa() {
+            if(!state.caixaAberto) return alert("Caixa já está fechado!");
+            if(!confirm("Deseja fechar o caixa agora?")) return;
+            await getCol('caixa').doc(state.caixaDocId).update({ fechamento: Date.now() });
+        }
+
+        function updateCaixaUI() {
+            const el = document.getElementById('caixaStatus');
+            el.innerText = state.caixaAberto ? "Caixa Aberto" : "Caixa Fechado";
+            el.className = state.caixaAberto ? "text-[10px] font-bold px-3 py-1 rounded bg-emerald-100 text-emerald-600 uppercase" : "text-[10px] font-bold px-3 py-1 rounded bg-red-100 text-red-600 uppercase";
+        }
+
+        // --- FINANCEIRO ---
+        async function registrarFin(desc, cli, tipo, valor, origem) {
+            await getCol('financeiro').add({
+                data: new Date().toLocaleDateString(),
+                ts: Date.now(),
+                desc, cliente: cli, tipo, valor, origem
             });
         }
 
-        function gerarCodigoCliente() {
-            const code = `CLI-${String(state.clientes.length + 1).padStart(3, '0')}`;
-            document.getElementById('cliCodigo').value = code;
+        function renderBalanço() {
+            const fCli = document.getElementById('finFiltroCli').value;
+            const fProd = document.getElementById('finFiltroProd').value;
+            let filt = state.financeiro;
+            if(fCli) filt = filt.filter(x => x.cliente === fCli);
+            if(fProd) filt = filt.filter(x => x.desc.includes(fProd));
+
+            let ent = 0, sai = 0;
+            document.getElementById('balancoCorpo').innerHTML = filt.map(t => {
+                if(t.tipo === 'Entrada') ent += t.valor; else sai += t.valor;
+                return `<tr>
+                    <td class="p-4">${t.data}</td>
+                    <td class="p-4 font-bold uppercase">${t.desc} <br><small class="text-slate-400 font-normal">Origem: ${t.origem}</small></td>
+                    <td class="p-4 text-slate-500">${t.cliente}</td>
+                    <td class="p-4 text-right font-black ${t.tipo === 'Entrada' ? 'text-emerald-600' : 'text-red-600'}">R$ ${t.valor.toFixed(2)}</td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('finEntradas').innerText = `R$ ${ent.toFixed(2)}`;
+            document.getElementById('finSaidas').innerText = `R$ ${sai.toFixed(2)}`;
+            document.getElementById('finSaldo').innerText = `R$ ${(ent - sai).toFixed(2)}`;
         }
 
-        function gerarCodigoOS() {
-            const n = state.ordens.length > 0 ? parseInt(state.ordens[0].codigo.split('-')[2]) + 1 : 1001;
-            document.getElementById('osNovoCodigo').innerText = `OS-2025-${n}`;
+        // --- RENDERS DIVERSOS ---
+        function renderClientes() {
+            document.getElementById('clientesGrid').innerHTML = state.clientes.map(c => `
+                <div class="card p-4">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-black text-slate-400">${c.codigo}</span>
+                    </div>
+                    <h4 class="font-black text-sm uppercase">${c.nome}</h4>
+                    <p class="text-[10px] text-slate-500 font-bold"><i class="fab fa-whatsapp text-emerald-500"></i> ${c.zap}</p>
+                    <p class="text-[9px] text-slate-400 mt-2">${c.endereco || 's/ endereço'}</p>
+                </div>
+            `).join('');
         }
 
-        window.switchTab = (t) => {
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
-            document.getElementById('tab-'+t).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('nav-'+t).classList.add('tab-active');
-        };
+        function renderFornecedores() {
+            document.getElementById('fornecedoresGrid').innerHTML = state.fornecedores.map(f => `
+                <div class="card p-4">
+                    <span class="text-[9px] font-black text-slate-400">${f.codigo}</span>
+                    <h4 class="font-black text-sm uppercase">${f.nome}</h4>
+                    <p class="text-[10px] text-slate-500">${f.telefone}</p>
+                    <p class="text-[9px] text-slate-400 mt-1">${f.endereco}</p>
+                </div>
+            `).join('');
+        }
 
-        window.previewOSImg = (input) => {
-            if (input.files?.[0]) {
+        function renderEstoque() {
+            document.getElementById('estoqueGrid').innerHTML = state.estoque.map(p => `
+                <div class="card p-5 border-l-4 ${p.qtd <= p.min ? 'border-red-500 bg-red-50' : 'border-blue-400'}">
+                    <h4 class="font-black text-xs uppercase">${p.nome}</h4>
+                    <div class="flex justify-between items-end mt-4">
+                        <div>
+                            <label class="text-[8px]">Qtd</label>
+                            <span class="text-xl font-black ${p.qtd <= p.min ? 'text-red-600' : 'text-slate-900'}">${p.qtd}</span>
+                        </div>
+                        <div class="text-right">
+                            <label class="text-[8px]">Venda</label>
+                            <span class="text-blue-600 font-black">R$ ${p.venda.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- UTILIDADES ---
+        function updateSelects() {
+            const clis = '<option value="">Selecione Cliente</option>' + state.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+            const prods = '<option value="">Selecione Produto</option>' + state.estoque.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+            const forns = '<option value="">Selecione Fornecedor</option>' + state.fornecedores.map(f => `<option value="${f.nome}">${f.nome}</option>`).join('');
+
+            document.getElementById('osClienteId').innerHTML = clis;
+            document.getElementById('finFiltroCli').innerHTML = clis;
+            document.getElementById('osProdAdd').innerHTML = prods;
+            document.getElementById('pdvProdId').innerHTML = prods;
+            document.getElementById('compItem').innerHTML = prods;
+            document.getElementById('prodForn').innerHTML = forns;
+            document.getElementById('finFiltroProd').innerHTML = prods;
+        }
+
+        function loadHistoricoCliente(nome) {
+            if(!nome) return;
+            const servicos = state.ordens.filter(o => o.cliente === nome);
+            document.getElementById('cliMiniHistorico').innerText = `${servicos.length} Serviços Realizados`;
+        }
+
+        function previewOS(input) {
+            if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    state.osFotoBase64 = e.target.result;
-                    const p = document.getElementById('osFotoPreview');
-                    p.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-                    p.classList.remove('hidden');
+                    state.imgOS = e.target.result;
+                    document.getElementById('osImgView').src = e.target.result;
+                    document.getElementById('osPrevCont').classList.remove('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
             }
-        };
+        }
 
-        // Torna funções globais para o HTML
-        window.salvarOS = salvarOS;
-        window.salvarCliente = salvarCliente;
-        window.salvarProduto = salvarProduto;
-        window.salvarFornecedor = () => {}; // Implementar se necessário
-        window.addCompRow = addCompRow;
+        function limparOS() {
+            document.getElementById('osCodigo').innerText = "OS-" + Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('osTitulo').value = "";
+            document.getElementById('osDescricao').value = "";
+            document.getElementById('osEntrada').value = 0;
+            state.osItens = [];
+            state.imgOS = "";
+            document.getElementById('osPrevCont').classList.add('hidden');
+            renderOSItens();
+        }
 
+        // --- PDFS ---
+        function exportarPDFOS() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const cod = document.getElementById('osCodigo').innerText;
+            doc.setFontSize(20); doc.text("ORDEM DE SERVIÇO", 105, 20, {align: 'center'});
+            doc.setFontSize(10); doc.text(cod, 105, 26, {align: 'center'});
+            doc.text(`Cliente: ${document.getElementById('osClienteId').value}`, 20, 40);
+            doc.text(`Serviço: ${document.getElementById('osTitulo').value}`, 20, 46);
+            doc.text(`Descrição: ${document.getElementById('osDescricao').value}`, 20, 52, {maxWidth: 170});
+            
+            const rows = state.osItens.map(it => [it.nome, it.qtd, `R$ ${it.valor.toFixed(2)}`, `R$ ${(it.valor*it.qtd).toFixed(2)}`]);
+            doc.autoTable({ startY: 60, head: [['Item', 'Qtd', 'Unit', 'Total']], body: rows });
+            doc.save(`${cod}.pdf`);
+        }
+
+        function exportarReciboPDV(forma) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ format: [80, 150], unit: 'mm' });
+            doc.setFontSize(10); doc.text("COMPROVANTE DE VENDA", 40, 10, {align: 'center'});
+            doc.setFontSize(8); doc.text(`Forma: ${forma}`, 5, 20);
+            doc.text(`Data: ${new Date().toLocaleString()}`, 5, 24);
+            const items = state.pdvItens.map(it => [it.nome, it.qtd, (it.valor*it.qtd).toFixed(2)]);
+            doc.autoTable({ startY: 28, styles: {fontSize: 6}, head: [['Item', 'Q', '$']], body: items });
+            doc.save('recibo-pdv.pdf');
+        }
+
+        // Funções de salvamento básico de cadastros
+        async function salvarCliente() {
+            const nome = document.getElementById('cliNome').value;
+            if(!nome) return alert("Preencha o nome");
+            await getCol('clientes').add({
+                codigo: "C-" + Math.floor(1000 + Math.random() * 9000),
+                nome, documento: document.getElementById('cliDoc').value,
+                zap: document.getElementById('cliZap').value,
+                endereco: document.getElementById('cliEnd').value,
+                ts: Date.now()
+            });
+            alert("Cliente salvo!");
+            document.querySelectorAll('#tab-clientes input, #tab-clientes textarea').forEach(i => i.value = "");
+        }
+
+        async function salvarFornecedor() {
+            const nome = document.getElementById('fornNome').value;
+            if(!nome) return alert("Preencha o nome");
+            await getCol('fornecedores').add({
+                codigo: "F-" + Math.floor(1000 + Math.random() * 9000),
+                nome, telefone: document.getElementById('fornTel').value,
+                endereco: document.getElementById('fornEnd').value,
+                ts: Date.now()
+            });
+            alert("Fornecedor salvo!");
+            document.querySelectorAll('#tab-fornecedores input, #tab-fornecedores textarea').forEach(i => i.value = "");
+        }
     </script>
 </body>
 </html>
