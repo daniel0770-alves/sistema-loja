@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão - Loja 01</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        .tab-active { background-color: #1e293b; color: #3b82f6; border-bottom: 3px solid #3b82f6; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen text-slate-900">
+
+    <!-- Header / Navegação -->
+    <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-2xl">
+        <div class="container mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg rotate-3">
+                    <i class="fas fa-rocket text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tighter leading-none">LOJA 01 <span class="text-blue-500">DIGITAL</span></h1>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Interface Sincronizada XLSM</span>
+                </div>
+            </div>
+            
+            <div class="flex bg-slate-800 rounded-2xl p-1.5 overflow-x-auto max-w-full custom-scrollbar">
+                <button id="btn-cadastro" onclick="switchTab('cadastro')" class="px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap tab-active">
+                    <i class="fas fa-edit mr-2"></i>OS / CADASTRO
+                </button>
+                <button id="btn-orcamento" onclick="switchTab('orcamento')" class="px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap text-slate-400 hover:text-white">
+                    <i class="fas fa-file-invoice-dollar mr-2"></i>ORÇAMENTOS
+                </button>
+                <button id="btn-servicos" onclick="switchTab('servicos')" class="px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap text-slate-400 hover:text-white">
+                    <i class="fas fa-stream mr-2"></i>PRAZOS & SALDOS
+                </button>
+                <button id="btn-produtos" onclick="switchTab('produtos')" class="px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap text-slate-400 hover:text-white">
+                    <i class="fas fa-box-open mr-2"></i>MATERIAIS
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 lg:p-8">
+
+        <!-- ABA ORÇAMENTO -->
+        <div id="tab-orcamento" class="tab-content hidden animate-fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-[2rem] card-shadow border border-slate-100 p-8">
+                        <div class="flex items-center justify-between mb-8 border-b border-slate-50 pb-6">
+                            <div>
+                                <h2 class="text-2xl font-black text-slate-800 italic">GERADOR DE ORÇAMENTO</h2>
+                                <p class="text-[10px] font-bold text-blue-500 uppercase mt-1 tracking-widest">Baseado na Planilha "Orçamento"</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-2xl border text-right">
+                                <span class="text-[9px] font-black text-slate-400 uppercase block">Data/Hora Sistema</span>
+                                <div id="DataeHoraOraçamento" class="text-sm font-mono font-bold text-slate-700 leading-none mt-1 tracking-tighter">--/--/---- --:--:--</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block ml-1">Nome do Cliente (NomeOrçamento)</label>
+                                <input type="text" id="NomeOrçamento" class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all font-semibold outline-none shadow-inner" placeholder="Nome Completo...">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block ml-1">Descrição do Serviço (DescriçaoOrçamento)</label>
+                                <textarea id="DescriçaoOrçamento" rows="3" class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all font-semibold outline-none shadow-inner" placeholder="O que o cliente solicitou?"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block ml-1">Grupo</label>
+                                <select id="GrupoOrçamento" class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl font-bold appearance-none">
+                                    <option value="Comunicação Visual">Comunicação Visual</option>
+                                    <option value="Gráfica Rápida">Gráfica Rápida</option>
+                                    <option value="Brindes">Brindes</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block ml-1">Status de Liberação</label>
+                                <select id="StatusDeLiberaçãoOrçamento" class="w-full p-4 bg-orange-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl font-black text-orange-600 appearance-none">
+                                    <option value="Aguardando">AGUARDANDO APROVAÇÃO</option>
+                                    <option value="Aprovado">APROVADO / LIBERADO</option>
+                                    <option value="Recusado">RECUSADO PELO CLIENTE</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block ml-1">Taxa de Entrega</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 font-bold text-slate-400">R$</span>
+                                    <input type="number" id="TaxaDeEntregaOrçamento" oninput="calcularTotalOrcamento()" class="w-full p-4 pl-12 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl font-bold outline-none" value="0.00">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black text-blue-600 uppercase mb-2 block ml-1">Valor Total Orçado</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 font-bold text-blue-400">R$</span>
+                                    <input type="number" id="ValorTotalOrçamento" class="w-full p-4 pl-12 bg-blue-600 text-white border-none rounded-2xl font-black text-lg shadow-lg focus:ring-4 focus:ring-blue-200 outline-none" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-10 flex justify-between items-center pt-8 border-t border-slate-50">
+                            <button onclick="limparCamposOrcamento()" class="text-slate-400 font-bold text-xs uppercase hover:text-red-500 transition">Resetar Tudo</button>
+                            <button onclick="salvarOrcamento()" class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-sm shadow-xl hover:bg-blue-600 hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3">
+                                <i class="fas fa-cloud-upload-alt"></i> ENVIAR PARA EXCEL
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-blue-700 to-blue-900 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                        <i class="fas fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10 rotate-12"></i>
+                        <h3 class="text-xs font-black text-blue-300 uppercase tracking-widest mb-6">Métricas da Sessão</h3>
+                        <div class="space-y-6 relative z-10">
+                            <div>
+                                <p class="text-[10px] font-bold text-blue-200 uppercase opacity-70">Volume Total</p>
+                                <div id="resumoOrcado" class="text-3xl font-black">R$ 0,00</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white/10 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-bold text-blue-200 uppercase">Pendentes</p>
+                                    <div id="resumoPendente" class="text-xl font-black">0</div>
+                                </div>
+                                <div class="bg-green-500/20 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-bold text-green-200 uppercase">Ganhos</p>
+                                    <div id="resumoAprovado" class="text-xl font-black">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Histórico Rápido
+                        </h4>
+                        <div id="listaHistorico" class="space-y-3">
+                            <div class="text-center py-6 text-slate-300 italic text-xs">Nenhum registro agora.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA DE CADASTRO (OS Ativas) -->
+        <div id="tab-cadastro" class="tab-content animate-fade-in">
+            <div class="max-w-4xl mx-auto bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                <div class="bg-slate-900 p-8 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-tools text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-black italic tracking-tighter">CADASTRO DE SERVIÇO</h2>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-[0.3em]">Planilha Ativa: Aba Cadastro</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="number" id="caixacodigo" placeholder="CÓD" class="w-24 p-3 bg-slate-800 border-none rounded-xl text-center font-black text-blue-400 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <button onclick="carregarOS()" class="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl transition-all">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-8 lg:p-12">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div class="border-l-4 border-blue-600 pl-4">
+                                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Informações do Cliente</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1 block mb-1">Nome Completo</label>
+                                        <input type="text" id="campoCliente" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1 block mb-1">ID / Código Interno</label>
+                                        <input type="text" id="campoIdCliente" class="w-full p-4 bg-slate-50 rounded-2xl font-mono text-sm border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="border-l-4 border-green-600 pl-4">
+                                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Financeiro & Prazos</h3>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1 block mb-1">Valor Total</label>
+                                        <input type="number" id="caixavalortotal" oninput="calcularSaldoCadastro()" class="w-full p-4 bg-slate-50 rounded-2xl font-black text-blue-600 border-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1 block mb-1">Depositado</label>
+                                        <input type="number" id="caixadepositado" oninput="calcularSaldoCadastro()" class="w-full p-4 bg-slate-50 rounded-2xl font-black text-green-600 border-none">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1 block mb-1">Prazo Final</label>
+                                        <input type="date" id="caixadatafinal" onchange="validarPrazoCadastro()" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none text-sm">
+                                    </div>
+                                    <div class="flex flex-col justify-end">
+                                        <div id="displaySaldo" class="p-4 bg-slate-100 rounded-2xl font-black text-center text-red-600 text-lg shadow-inner">
+                                            R$ 0,00
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="cadastroStatusInfo" class="bg-slate-50 p-3 rounded-xl border text-center text-[10px] font-black uppercase text-slate-400">Pronto para processar</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 flex flex-wrap justify-center gap-4 border-t border-slate-50 pt-10">
+                        <button onclick="salvarOS('alterar')" class="px-8 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-xs hover:bg-slate-200 transition-all uppercase tracking-widest">Alterar Existente</button>
+                        <button onclick="salvarOS('novo')" class="px-12 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs shadow-2xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest">Gravar Nova OS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA SERVIÇOS (TABELA COMPLETA) -->
+        <div id="tab-servicos" class="tab-content hidden animate-fade-in">
+             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-3xl card-shadow border-b-4 border-blue-600">
+                    <span class="text-[9px] font-black text-slate-400 uppercase block mb-1">Ativos</span>
+                    <div id="totalOSCount" class="text-3xl font-black text-slate-800 leading-none">0</div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl card-shadow border-b-4 border-green-500">
+                    <span class="text-[9px] font-black text-slate-400 uppercase block mb-1">Entrada Líquida</span>
+                    <div id="receitaLiquida" class="text-3xl font-black text-green-600 leading-none">R$ 0,00</div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl card-shadow border-b-4 border-red-500">
+                    <span class="text-[9px] font-black text-slate-400 uppercase block mb-1">A Receber</span>
+                    <div id="pendenteGeral" class="text-3xl font-black text-red-600 leading-none">R$ 0,00</div>
+                </div>
+                <div class="bg-slate-900 p-6 rounded-3xl shadow-xl">
+                    <span class="text-[9px] font-black text-blue-400 uppercase block mb-1">Performance</span>
+                    <div id="statusDia" class="text-xs font-bold text-white mt-1">Sincronizado</div>
+                </div>
+             </div>
+
+             <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cód</th>
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição</th>
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Total</th>
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Saldo</th>
+                                <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoTabelaPrazos" class="divide-y divide-slate-50">
+                            <!-- Injetado via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+             </div>
+        </div>
+
+        <!-- ABA MATERIAIS -->
+        <div id="tab-produtos" class="tab-content hidden animate-fade-in">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-search-dollar text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black italic uppercase text-slate-800">Localizador de Arquivos</h3>
+                    </div>
+                    <div class="relative group">
+                        <input type="text" id="idSaida" placeholder="Digite o nome ou ID do material..." class="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-orange-500 rounded-[1.5rem] font-bold outline-none transition-all pr-16 shadow-inner">
+                        <button onclick="buscarMaterial()" class="absolute right-3 top-3 bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-orange-600 transition-all shadow-lg active:scale-90">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="mt-10 p-6 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Caminho OneDrive (Conforme VBA)</span>
+                        <p id="textoDaImagem" class="text-[10px] text-slate-600 font-mono break-all italic leading-relaxed">Aguardando comando...</p>
+                    </div>
+                </div>
+                <div class="bg-slate-200 rounded-[3rem] flex items-center justify-center border-8 border-white shadow-2xl min-h-[400px] overflow-hidden group">
+                    <div id="previewMaterial" class="text-center transition-transform group-hover:scale-105 duration-500">
+                        <i class="fas fa-file-image fa-5x text-slate-300 mb-4 opacity-40"></i>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prévia do Layout</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Dados de exemplo sincronizados com as colunas da sua planilha XLSM
+        let dbOrcamentos = [];
+        let dbCadastroOS = [
+            { codigo: 1, cliente: "Tiago Silva", idCli: "VBA-001", total: 150.00, dep: 75.00, dataI: "2023-12-01", dataF: "2024-01-15", status: "Em Produção", servico: "Lona Front Light" },
+            { codigo: 2, cliente: "Restaurante Central", idCli: "VBA-002", total: 400.00, dep: 400.00, dataI: "2023-12-10", dataF: "2023-12-20", status: "Finalizado", servico: "Placa PVC" }
+        ];
+
+        // Relógio Real-time (Sub AtualizarDataHora)
+        function atualizarRelogio() {
+            const agora = new Date();
+            const formatada = agora.toLocaleDateString('pt-BR') + " " + agora.toLocaleTimeString('pt-BR');
+            const el = document.getElementById('DataeHoraOraçamento');
+            if (el) el.innerText = formatada;
+        }
+        setInterval(atualizarRelogio, 1000);
+
+        // Navegação
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            
+            const btnIds = ['btn-cadastro', 'btn-orcamento', 'btn-servicos', 'btn-produtos'];
+            btnIds.forEach(id => {
+                const btn = document.getElementById(id);
+                if (id === 'btn-' + tab) {
+                    btn.className = "px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap tab-active";
+                } else {
+                    btn.className = "px-5 py-2.5 rounded-xl transition-all font-bold text-xs whitespace-nowrap text-slate-400 hover:text-white";
+                }
+            });
+
+            if (tab === 'servicos') renderizarTabelaServicos();
+        }
+
+        // Funções de Orçamento
+        function calcularTotalOrcamento() {
+            // No futuro, aqui podemos aplicar fórmulas de preços por m²
+        }
+
+        function salvarOrcamento() {
+            const nome = document.getElementById('NomeOrçamento').value;
+            const total = parseFloat(document.getElementById('ValorTotalOrçamento').value);
+            
+            if(!nome || total <= 0) {
+                alert("Por favor, preencha o nome do cliente e o valor total.");
+                return;
+            }
+
+            const novo = {
+                cliente: nome,
+                servico: document.getElementById('DescriçaoOrçamento').value,
+                total: total,
+                status: document.getElementById('StatusDeLiberaçãoOrçamento').value,
+                data: document.getElementById('DataeHoraOraçamento').innerText
+            };
+
+            dbOrcamentos.unshift(novo);
+            atualizarResumoOrcamento();
+            limparCamposOrcamento();
+            
+            const historico = document.getElementById('listaHistorico');
+            historico.innerHTML = `
+                <div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl animate-fade-in">
+                    <p class="text-xs font-black text-blue-700">${novo.cliente}</p>
+                    <p class="text-[9px] text-blue-500 font-bold">R$ ${novo.total.toFixed(2)} - ${novo.status}</p>
+                </div>
+            ` + historico.innerHTML;
+        }
+
+        function atualizarResumoOrcamento() {
+            let total = 0, p = 0, a = 0;
+            dbOrcamentos.forEach(o => {
+                total += o.total;
+                if(o.status === 'Aguardando') p++;
+                if(o.status === 'Aprovado') a++;
+            });
+            document.getElementById('resumoOrcado').innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+            document.getElementById('resumoPendente').innerText = p;
+            document.getElementById('resumoAprovado').innerText = a;
+        }
+
+        function limparCamposOrcamento() {
+            document.getElementById('NomeOrçamento').value = "";
+            document.getElementById('DescriçaoOrçamento').value = "";
+            document.getElementById('TaxaDeEntregaOrçamento').value = "0.00";
+            document.getElementById('ValorTotalOrçamento').value = "0.00";
+        }
+
+        // Funções de Cadastro (OS)
+        function carregarOS() {
+            const cod = parseInt(document.getElementById('caixacodigo').value);
+            const os = dbCadastroOS.find(x => x.codigo === cod);
+            if(os) {
+                document.getElementById('campoCliente').value = os.cliente;
+                document.getElementById('campoIdCliente').value = os.idCli;
+                document.getElementById('caixavalortotal').value = os.total;
+                document.getElementById('caixadepositado').value = os.dep;
+                document.getElementById('caixadatafinal').value = os.dataF;
+                calcularSaldoCadastro();
+                validarPrazoCadastro();
+            } else {
+                alert("OS não encontrada nos registros locais.");
+            }
+        }
+
+        function calcularSaldoCadastro() {
+            const total = parseFloat(document.getElementById('caixavalortotal').value) || 0;
+            const dep = parseFloat(document.getElementById('caixadepositado').value) || 0;
+            const saldo = total - dep;
+            const display = document.getElementById('displaySaldo');
+            display.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo);
+            display.className = saldo > 0 ? "p-4 bg-red-50 text-red-600 rounded-2xl font-black text-center text-lg animate-pulse" : "p-4 bg-green-50 text-green-600 rounded-2xl font-black text-center text-lg";
+        }
+
+        function validarPrazoCadastro() {
+            const dataF = document.getElementById('caixadatafinal').value;
+            const info = document.getElementById('cadastroStatusInfo');
+            if(!dataF) return;
+            
+            const dataFinal = new Date(dataF + "T00:00:00");
+            const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+            if(dataFinal < hoje) {
+                info.innerText = "ATENÇÃO: PRAZO EXPIROU";
+                info.className = "bg-red-600 text-white p-3 rounded-xl border-none text-center text-[10px] font-black uppercase";
+            } else if(dataFinal.getTime() === hoje.getTime()) {
+                info.innerText = "URGENTE: VENCE HOJE";
+                info.className = "bg-orange-500 text-white p-3 rounded-xl border-none text-center text-[10px] font-black uppercase";
+            } else {
+                info.innerText = "DENTRO DO PRAZO";
+                info.className = "bg-green-100 text-green-700 p-3 rounded-xl border-none text-center text-[10px] font-black uppercase";
+            }
+        }
+
+        function renderizarTabelaServicos() {
+            const corpo = document.getElementById('corpoTabelaPrazos');
+            let html = "", liq = 0, pen = 0;
+
+            dbCadastroOS.forEach(os => {
+                const saldo = os.total - os.dep;
+                liq += os.dep;
+                pen += saldo;
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-8 py-6 font-black text-blue-600 text-xs">#${os.codigo.toString().padStart(3, '0')}</td>
+                        <td class="px-8 py-6">
+                            <div class="text-xs font-black text-slate-800">${os.cliente}</div>
+                            <div class="text-[9px] text-slate-400 font-mono tracking-tighter">${os.idCli}</div>
+                        </td>
+                        <td class="px-8 py-6 text-[10px] font-bold text-slate-500 italic uppercase max-w-xs truncate">${os.servico}</td>
+                        <td class="px-8 py-6 text-right text-xs font-bold text-slate-900">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(os.total)}</td>
+                        <td class="px-8 py-6 text-right text-xs font-black ${saldo > 0 ? 'text-red-500' : 'text-slate-300'}">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo)}</td>
+                        <td class="px-8 py-6 text-center">
+                            <span class="status-badge ${os.status === 'Finalizado' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">${os.status}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            corpo.innerHTML = html;
+            document.getElementById('totalOSCount').innerText = dbCadastroOS.length;
+            document.getElementById('receitaLiquida').innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(liq);
+            document.getElementById('pendenteGeral').innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pen);
+        }
+
+        function buscarMaterial() {
+            const id = document.getElementById('idSaida').value;
+            if(!id) return;
+            const path = `C:\\Users\\dldes\\OneDrive\\Internos\\Imagens\\Imagens materiais\\${id}.jpg`;
+            document.getElementById('textoDaImagem').innerText = path;
+            document.getElementById('previewMaterial').innerHTML = `
+                <div class="relative group cursor-pointer">
+                    <img src="https://via.placeholder.com/600x400/1e293b/ffffff?text=MATERIAL:+${id.toUpperCase()}" class="rounded-[2rem] shadow-2xl">
+                    <div class="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] flex items-center justify-center">
+                         <span class="bg-white text-slate-900 px-4 py-2 rounded-xl font-black text-[10px] uppercase">Abrir Original</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = () => {
+            switchTab('cadastro');
+            atualizarRelogio();
+        }
+    </script>
+</body>
+</html>
